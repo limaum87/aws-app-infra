@@ -17,3 +17,4 @@
 
 # Ignorar arquivos de lock do Terraform
 .terraform.lock.hcl
+.terraform.tfstate.lock.info

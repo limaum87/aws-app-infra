@@ -11,20 +11,24 @@ output "internet_gateway_id" {
   value       = aws_internet_gateway.this.id
 }
 
-
-# Saída para a Tabela de Rotas Pública
-output "public_route_table_id" {
-  description = "ID da tabela de rotas pública"
-  value       = aws_route_table.public.id
+output "public_subnet_ids" {
+  description = "IDs of the public subnets"
+  value       = aws_subnet.public[*].id
 }
 
+output "private_subnet_ids" {
+  description = "IDs of the private subnets"
+  value       = aws_subnet.private[*].id
+}
 
+# Exporta apenas o primeiro ID da subnet pública (se necessário)
 output "public_subnet_id" {
-  description = "IDs das subnets públicas"
-  value       = aws_subnet.public.id # Lista com IDs das subnets públicas
+  description = "ID of the first public subnet"
+  value       = aws_subnet.public[0].id
 }
 
+# Exporta apenas o primeiro ID da subnet privada (se necessário)
 output "private_subnet_id" {
-  description = "ID da subnet privada"
-  value       = aws_subnet.private.id # ID de uma única subnet privada
+  description = "ID of the first private subnet"
+  value       = aws_subnet.private[0].id
 }

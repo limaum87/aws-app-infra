@@ -10,23 +10,32 @@ resource "aws_vpc" "this" {
   )
 }
 
-# Subnet Pública (para o ALB)
+# Public Subnets
 resource "aws_subnet" "public" {
+  count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.this.id
-  cidr_block              = var.public_subnet_cidr
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = var.public_availability_zones[count.index]
   map_public_ip_on_launch = true
-  availability_zone       = var.public_availability_zone
-  tags                    = var.tags
+  tags = merge(
+    var.tags,
+    { Name = "${var.vpc_name}-public-subnet-${count.index + 1}" }
+  )
 }
 
-# Subnet Privada (para as instâncias EC2)
+# Private Subnets
 resource "aws_subnet" "private" {
+  count                   = length(var.private_subnet_cidrs)
   vpc_id                  = aws_vpc.this.id
-  cidr_block              = var.private_subnet_cidr
+  cidr_block              = var.private_subnet_cidrs[count.index]
+  availability_zone       = var.private_availability_zones[count.index]
   map_public_ip_on_launch = false
-  availability_zone       = var.private_availability_zone
-  tags                    = var.tags
+  tags = merge(
+    var.tags,
+    { Name = "${var.vpc_name}-private-subnet-${count.index + 1}" }
+  )
 }
+
 
 # Internet Gateway (para a subnet pública)
 resource "aws_internet_gateway" "this" {
@@ -46,7 +55,7 @@ resource "aws_route_table" "public" {
 
 # Associação da Tabela de Rotas com a Subnet Pública
 resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+  for_each      = { for idx, subnet_id in aws_subnet.public : idx => subnet_id.id } # Itera sobre todas as subnets públicas
+  subnet_id     = each.value # Associa a cada subnet pública
   route_table_id = aws_route_table.public.id
 }
-

@@ -7,15 +7,12 @@ provider "aws" {
 module "vpc" {
   source = "./modules/vpc"
   cidr_block                 = var.cidr_block
-  public_subnet_cidr        = var.public_subnet_cidr
-  private_subnet_cidr        = var.private_subnet_cidr
-  public_availability_zone = var.public_availability_zone
-  private_availability_zone  = var.private_availability_zone
+  public_subnet_cidrs        = var.public_subnet_cidrs
+  public_availability_zones  = var.public_availability_zones
+  private_subnet_cidrs       = var.private_subnet_cidrs
+  private_availability_zones = var.private_availability_zones
   vpc_name                   = var.vpc_name
-  tags = {
-    Environment = "Development"
-    Project     = "Terraform Example"
-  }
+  tags                       = var.tags
 }
 # Módulo do NAT Gateway
 module "nat_gateway" {
@@ -76,7 +73,7 @@ module "alb" {
   source            = "./modules/alb"
   name              = var.alb_name # Prefixo do nome do ALB
   vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = [module.vpc.public_subnet_id]
+  public_subnet_ids = module.vpc.public_subnet_ids # Referência ao output do módulo VPC
   instance_ids      = [module.ec2_instance.instance_id]
   tags = {
     Environment = "Development"

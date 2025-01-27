@@ -1,26 +1,26 @@
 variable "cidr_block" {
-  description = "CIDR da VPC"
+  description = "The CIDR block for the VPC"
+  type        = string
 }
 
-variable "public_subnet_cidr" {
-  description = "CIDR para a subnet pública"
+variable "public_subnet_cidrs" {
+  description = "List of CIDR blocks for the public subnets"
+  type        = list(string)
 }
 
-variable "private_subnet_cidr" {
-  description = "CIDR para a subnet privada"
+variable "public_availability_zones" {
+  description = "List of availability zones for the public subnets"
+  type        = list(string)
 }
 
-variable "public_availability_zone" {
-  description = "Zona de disponibilidade para a subnet pública"
+variable "private_subnet_cidrs" {
+  description = "List of CIDR blocks for the private subnets"
+  type        = list(string)
 }
 
-variable "private_availability_zone" {
-  description = "Zona de disponibilidade para a subnet privada"
-}
-
-variable "tags" {
-  description = "Tags para os recursos"
-  type        = map(string)
+variable "private_availability_zones" {
+  description = "List of availability zones for the private subnets"
+  type        = list(string)
 }
 
 variable "vpc_name" {
@@ -28,3 +28,8 @@ variable "vpc_name" {
   type        = string
 }
 
+variable "tags" {
+  description = "Tags to apply to all resources in the VPC module"
+  type        = map(string)
+  default     = {}
+}

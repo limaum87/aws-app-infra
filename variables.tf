@@ -1,58 +1,56 @@
 variable "region" {
-  description = "Região da AWS"
+  description = "AWS Region"
   type        = string
   default     = "us-east-1"
 }
 
 variable "profile" {
-  description = "Perfil AWS configurado no arquivo credentials"
+  description = "AWS profile configured in the credentials file"
   type        = string
   default     = "default"
 }
 
 variable "cidr_block" {
-  description = "CIDR principal da VPC"
+  description = "Main CIDR block for the VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
 
-variable "public_subnet_cidr" {
-  description = "CIDR da subnet pública"
-  type        = string
-  default     = "10.0.1.0/24"
+# Public Subnets
+variable "public_subnet_cidrs" {
+  description = "List of CIDR blocks for the public subnets"
+  type        = list(string)
 }
 
-variable "private_subnet_cidr" {
-  description = "CIDR da subnet privada"
-  type        = string
-  default     = "10.0.2.0/24"
+variable "public_availability_zones" {
+  description = "List of availability zones for the public subnets"
+  type        = list(string)
 }
 
-variable "public_availability_zone" {
-  description = "Zona de disponibilidade para a subnet pública"
-  type        = string
-  default     = "us-east-1a"
+# Private Subnets
+variable "private_subnet_cidrs" {
+  description = "List of CIDR blocks for the private subnets"
+  type        = list(string)
 }
 
-variable "private_availability_zone" {
-  description = "Zona de disponibilidade para a subnet privada"
-  type        = string
-  default     = "us-east-1a"
+variable "private_availability_zones" {
+  description = "List of availability zones for the private subnets"
+  type        = list(string)
 }
 
+# EC2 Instance
 variable "ami" {
-  description = "ID da AMI para a instância EC2"
+  description = "AMI ID for the EC2 instance"
   type        = string
 }
 
 variable "instance_type" {
-  description = "Tipo da instância EC2"
+  description = "EC2 instance type"
   type        = string
   default     = "t3.micro"
 }
 
-
-
+# Key Pair
 variable "key_name" {
   description = "The name of the key pair"
   type        = string
@@ -63,6 +61,7 @@ variable "public_key_path" {
   type        = string
 }
 
+# VPC and ALB Names
 variable "vpc_name" {
   description = "The name of the VPC"
   type        = string
@@ -73,3 +72,9 @@ variable "alb_name" {
   type        = string
 }
 
+# Tags
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}

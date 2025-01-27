@@ -57,3 +57,20 @@ resource "aws_security_group" "alb" {
     }
   )
 }
+
+# Listener para o ALB
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.this.arn # ARN do ALB
+  port              = 80              # Porta do listener (HTTP)
+  protocol          = "HTTP"          # Protocolo do listener
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.this.arn # Target Group associado
+  }
+}
+
+resource "aws_lb_target_group_attachment" "this" {
+  target_group_arn = aws_lb_target_group.this.arn # Target Group ARN
+  target_id        = var.instance_ids[0]         # ID da instância EC2 (primeira da lista)
+  port             = 80                          # Porta de destino
+}
