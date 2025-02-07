@@ -98,7 +98,7 @@ resource "aws_vpn_gateway" "vpg" {
 
 # Configuração do Customer Gateway
 resource "aws_customer_gateway" "cgw" {
-  ip_address = "179.105.252.102" # IP da sua rede on-premise
+  ip_address = var.customer_gateway_ip # IP da sua rede on-premise
   type = "ipsec.1"
 
   tags = {
@@ -123,7 +123,7 @@ resource "aws_vpn_connection" "vpn_connection" {
 # Rota Estática na AWS para enviar o tráfego para a rede on-premise
 resource "aws_route" "route_to_onprem" {
   route_table_id         = module.vpc.public_route_table_id  # Usando o output do módulo VPC
-  destination_cidr_block = "192.168.8.0/24"  # Rede on-premise
+  destination_cidr_block = var.destination_cidr_block  # Rede on-premise
   gateway_id             = aws_vpn_gateway.vpg.id
 }
 

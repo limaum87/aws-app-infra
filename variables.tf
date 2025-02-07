@@ -78,3 +78,14 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+
+variable "customer_gateway_ip" {
+  description = "IP of your Custormer Gateway"
+  type        = string
+}
+
+variable "destination_cidr_block"{
+  description = "CIDR on prem"
+  type        = string
+}
