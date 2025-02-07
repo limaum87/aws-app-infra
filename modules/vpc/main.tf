@@ -40,22 +40,65 @@ resource "aws_subnet" "private" {
 # Internet Gateway (para a subnet pública)
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
-  tags   = var.tags
+  tags = merge(var.tags, { Name = "${var.vpc_name}-internet-gateway" })
 }
 
-# Tabela de Rotas para a subnet pública
+
+# Criação do NAT Gateway
+resource "aws_nat_gateway" "this" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id  # Subnet pública onde o NAT Gateway vai ficar
+  tags = merge(var.tags, { Name = "${var.vpc_name}-nat-gateway" })
+}
+
+# Alocação do IP Elastic para o NAT Gateway
+resource "aws_eip" "nat" {
+  domain = "vpc"  # Alteração de 'vpc = true' para 'domain = "vpc"'
+  tags = merge(var.tags, { Name = "${var.vpc_name}-eip-nat" })
+}
+
+
+# Tabela de Rotas para as subnets públicas
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
+
+  # Rota para a internet via Internet Gateway
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.this.id
   }
-  tags = var.tags
+
+  tags = merge(var.tags, { 
+    Name = "${var.vpc_name}-public-route-table"  # Nome da tabela de rotas públicas
+  })
 }
 
-# Associação da Tabela de Rotas com a Subnet Pública
+# Associação da Tabela de Rotas com as Subnets Públicas
 resource "aws_route_table_association" "public" {
   for_each      = { for idx, subnet_id in aws_subnet.public : idx => subnet_id.id } # Itera sobre todas as subnets públicas
-  subnet_id     = each.value # Associa a cada subnet pública
+  subnet_id     = each.value
   route_table_id = aws_route_table.public.id
 }
+
+# Tabela de Rotas para as subnets privadas (via NAT Gateway)
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.this.id
+
+  # Rota para a internet via NAT Gateway
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.this.id
+  }
+
+  tags = merge(var.tags, { 
+    Name = "${var.vpc_name}-private-route-table"  # Nome da tabela de rotas privadas
+  })
+}
+
+# Associação da Tabela de Rotas com as Subnets Privadas
+resource "aws_route_table_association" "private" {
+  for_each      = { for idx, subnet_id in aws_subnet.private : idx => subnet_id.id } # Itera sobre todas as subnets privadas
+  subnet_id     = each.value
+  route_table_id = aws_route_table.private.id
+}
+

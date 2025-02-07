@@ -32,3 +32,18 @@ output "private_subnet_id" {
   description = "ID of the first private subnet"
   value       = aws_subnet.private[0].id
 }
+
+# Módulo VPC - Exportando a ID da Tabela de Rotas
+output "route_table_id" {
+  value = aws_route_table.public.id
+}
+
+output "private_route_table_id" {
+  value = aws_route_table.private.id
+  description = "ID da tabela de rotas para as subnets privadas"
+}
+
+output "public_route_table_id" {
+  value = aws_route_table.public.id
+  description = "ID da tabela de rotas para as subnets privadas"
+}

@@ -14,17 +14,7 @@ module "vpc" {
   vpc_name                   = var.vpc_name
   tags                       = var.tags
 }
-# Módulo do NAT Gateway
-module "nat_gateway" {
-  source            = "./modules/nat_gateway"
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_id  = module.vpc.public_subnet_id
-  private_subnet_id = module.vpc.private_subnet_id
-  tags              = {
-    Environment = "Development"
-    Project     = "Terraform Example"
-  }
-}
+
 
 # Módulo do Security Group
 module "security_group" {
@@ -42,15 +32,44 @@ module "security_group" {
   }
 }
 
+module "security_group2" {
+  source               = "./modules/security_group"
+  name                 = "allow-22"
+  description          = "Allow SSH traffic on port 22"
+  vpc_id               = module.vpc.vpc_id
+  ingress_from_port    = 22
+  ingress_to_port      = 22
+  protocol             = "tcp"
+  ingress_cidr_blocks  = ["0.0.0.0/0"] # Permite para todos
+  tags                 = {
+    Environment = "Development"
+    Project     = "Terraform Example"
+  }
+}
+
+module "allow_icmp" {
+  source               = "./modules/security_group"
+  name                 = "allow-icmp"
+  description          = "Allow ICMP traffic"
+  vpc_id               = module.vpc.vpc_id
+  ingress_from_port    = -1                   # -1 para permitir todos os tipos de ICMP
+  ingress_to_port      = -1                   # -1 para permitir todos os tipos de ICMP
+  protocol             = "icmp"               # Especifica o protocolo ICMP
+  ingress_cidr_blocks  = ["0.0.0.0/0"]       # Permite para todos
+  tags                 = {
+    Environment = "Development"
+    Project     = "Terraform Example"
+  }
+}
 # Módulo da Instância EC2
 module "ec2_instance" {
   source                    = "./modules/ec2"
   ami                       = var.ami
   instance_type             = var.instance_type
-  subnet_id                 = module.vpc.private_subnet_id # Subnet privada
-  associate_public_ip_address = false # Sem IP público
+  subnet_id                 = module.vpc.public_subnet_id # Subnet privada
+  associate_public_ip_address = true # Sem IP público
   key_name                  = module.key_pair.key_pair_name
-  security_group_ids        = [module.security_group.security_group_id]
+  security_group_ids        = [module.security_group.security_group_id,module.security_group2.security_group_id,module.allow_icmp.security_group_id]
   tags                      = {
     Name        = "Example EC2 Instance"
     Environment = "Development"
@@ -69,14 +88,42 @@ module "key_pair" {
   public_key = var.public_key_path # Arquivo contendo a chave pública
 }
 
-module "alb" {
-  source            = "./modules/alb"
-  name              = var.alb_name # Prefixo do nome do ALB
-  vpc_id            = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids # Referência ao output do módulo VPC
-  instance_ids      = [module.ec2_instance.instance_id]
+# Configuração do VPN Gateway
+resource "aws_vpn_gateway" "vpg" {
+  vpc_id             = module.vpc.vpc_id
   tags = {
-    Environment = "Development"
-    Project     = "Terraform Example"
+    Name = "VPNGateway"
   }
 }
+
+# Configuração do Customer Gateway
+resource "aws_customer_gateway" "cgw" {
+  ip_address = "179.105.252.102" # IP da sua rede on-premise
+  type = "ipsec.1"
+
+  tags = {
+    Name = "CustomerGateway"
+  }
+}
+
+# Configuração da VPN Connection com rotas estáticas
+resource "aws_vpn_connection" "vpn_connection" {
+  customer_gateway_id = aws_customer_gateway.cgw.id
+  vpn_gateway_id      = aws_vpn_gateway.vpg.id
+  type                = "ipsec.1"
+  static_routes_only  = true  # Indica que vamos usar rotas estáticas
+  # Definindo as rotas estáticas
+
+
+  tags = {
+    Name = "SiteToSiteVPN"
+  }
+}
+
+# Rota Estática na AWS para enviar o tráfego para a rede on-premise
+resource "aws_route" "route_to_onprem" {
+  route_table_id         = module.vpc.public_route_table_id  # Usando o output do módulo VPC
+  destination_cidr_block = "192.168.8.0/24"  # Rede on-premise
+  gateway_id             = aws_vpn_gateway.vpg.id
+}
+
