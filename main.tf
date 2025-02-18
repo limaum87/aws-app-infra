@@ -66,7 +66,7 @@ module "ec2_instance" {
   source                    = "./modules/ec2"
   ami                       = var.ami
   instance_type             = var.instance_type
-  subnet_id                 = module.vpc.public_subnet_id # Subnet privada
+  subnet_id                 = module.vpc.private_subnet_id # Subnet privada
   associate_public_ip_address = true # Sem IP público
   key_name                  = module.key_pair.key_pair_name
   security_group_ids        = [module.security_group.security_group_id,module.security_group2.security_group_id,module.allow_icmp.security_group_id]
@@ -122,8 +122,16 @@ resource "aws_vpn_connection" "vpn_connection" {
 
 # Rota Estática na AWS para enviar o tráfego para a rede on-premise
 resource "aws_route" "route_to_onprem" {
-  route_table_id         = module.vpc.public_route_table_id  # Usando o output do módulo VPC
+  route_table_id         = module.vpc.private_route_table_id  # Usando o output do módulo VPC
   destination_cidr_block = var.destination_cidr_block  # Rede on-premise
   gateway_id             = aws_vpn_gateway.vpg.id
 }
 
+
+
+# Chama o módulo do Route 53 para criar a zona privada
+module "route53" {
+  source   = "./modules/route53"    # Caminho para o módulo
+  zone_name = "accept.cloud"        # Nome da zona
+  vpc_id    = module.vpc.vpc_id      # ID da VPC criada no módulo VPC
+}
