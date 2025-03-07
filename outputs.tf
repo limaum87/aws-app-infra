@@ -13,17 +13,30 @@ output "private_subnet_id" {
   value       = module.vpc.private_subnet_id
 }
 
-output "security_group_id" {
-  description = "ID do Security Group criado"
-  value       = module.security_group.security_group_id
+
+
+# Output importante
+output "kubernetes_master_public_ip" {
+  value       = module.kubernetes_master.public_ip
+  description = "IP público do nó master do Kubernetes"
 }
 
-output "ec2_instance_id" {
-  description = "ID da instância EC2 criada"
-  value       = module.ec2_instance.instance_id
+output "kubernetes_master_private_ip" {
+  value       = module.kubernetes_master.private_ip
+  description = "IP privado do nó master do Kubernetes"
 }
 
-output "ec2_instance_private_ip" {
-  description = "IP privado da instância EC2"
-  value       = module.ec2_instance.private_ip
+output "kubernetes_workers_private_ips" {
+  value       = module.kubernetes_workers[*].private_ip
+  description = "IPs privados dos nós worker do Kubernetes"
+}
+
+output "kubernetes_connection_command" {
+  value       = "ssh -i ~/.ssh/sua_chave_privada ubuntu@${module.kubernetes_master.public_ip}"
+  description = "Comando para conectar ao nó master via SSH"
+}
+
+output "kubernetes_dashboard_access" {
+  value       = "Use: http://${module.kubernetes_master.public_ip}:30080 para acessar aplicações expostas via NodePort"
+  description = "URL para acessar aplicações expostas no cluster via NodePort"
 }

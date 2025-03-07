@@ -50,6 +50,25 @@ variable "instance_type" {
   default     = "t3.micro"
 }
 
+# Kubernetes específico
+variable "k8s_master_instance_type" {
+  description = "Instance type for Kubernetes master node"
+  type        = string
+  default     = "t3.medium"
+}
+
+variable "k8s_worker_instance_type" {
+  description = "Instance type for Kubernetes worker nodes"
+  type        = string
+  default     = "t3.small"
+}
+
+variable "k8s_worker_count" {
+  description = "Number of Kubernetes worker nodes"
+  type        = number
+  default     = 2
+}
+
 # Key Pair
 variable "key_name" {
   description = "The name of the key pair"
@@ -77,4 +96,14 @@ variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
   default     = {}
+}
+
+variable "kubeadm_token" {
+  description = "Token de autenticação gerado para o nó worker se juntar ao cluster Kubernetes"
+  type        = string
+}
+
+variable "kubeadm_token_hash" {
+  description = "Hash do certificado de autoridade para verificar a autenticidade do token"
+  type        = string
 }
