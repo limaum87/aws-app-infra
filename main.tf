@@ -43,8 +43,6 @@ module "kubernetes_sg" {
   }
 }
 
-
-
 # Security Group para SSH e acesso à API do Kubernetes
 module "k8s_api_ssh_sg" {
   source              = "./modules/security_group"
@@ -127,4 +125,21 @@ module "kubernetes_workers" {
   })
 }
 
+# Tabela de Rotas para a subnet privada com o NAT Gateway
+resource "aws_route_table" "private" {
+  vpc_id = module.vpc.vpc_id
 
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = module.nat_gateway.nat_gateway_id  # Direciona para o NAT Gateway
+  }
+
+  tags = var.tags
+}
+
+# Associação da Tabela de Rotas com a Subnet Privada
+resource "aws_route_table_association" "private" {
+  for_each      = { for idx, subnet_id in module.vpc.private_subnet_ids : idx => subnet_id } # Itera sobre todas as subnets privadas
+  subnet_id     = each.value
+  route_table_id = aws_route_table.private.id
+}

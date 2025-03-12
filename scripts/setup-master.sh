@@ -70,6 +70,7 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 # Instalar o plugin de rede (exemplo: Calico)
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 
+
 # Exibir o comando para adicionar nós workers
 echo "Kubernetes master node initialized successfully."
 echo "Run the following command on each worker node to join the cluster:"

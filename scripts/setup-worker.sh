@@ -4,14 +4,17 @@
 sudo apt-get update -y
 sudo apt-get upgrade -y
 
-# Instalar pacotes necessários
-sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+# Instalar pacotes necessários para repositórios seguros e o curl
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg
 
-# Adicionar a chave do repositório do Kubernetes
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+# Criar o diretório de keyrings, necessário para versões mais antigas do Ubuntu (se não existir)
+sudo mkdir -p /etc/apt/keyrings
 
-# Adicionar o repositório do Kubernetes
-echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+# Adicionar a chave pública para o repositório Kubernetes
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# Adicionar o repositório do Kubernetes (repositório comunitário)
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # Atualizar a lista de pacotes
 sudo apt-get update -y
@@ -22,16 +25,20 @@ sudo apt-get install -y kubelet kubeadm kubectl
 # Marcar as versões para não serem atualizadas automaticamente
 sudo apt-mark hold kubelet kubeadm kubectl
 
-# Desabilitar o swap (necessário para o Kubernetes)
-sudo swapoff -a
-sudo sed -i '/swap/d' /etc/fstab
+# Instalar e iniciar o containerd (runtime de contêiner)
+sudo apt-get install -y containerd
+sudo systemctl start containerd
+sudo systemctl enable containerd
 
-# Comando para adicionar o nó worker ao cluster
-sudo kubeadm join ${master_ip}:6443 --token ${token} --discovery-token-ca-cert-hash sha256:${hash}
+sudo modprobe bridge
 
-# Iniciar e habilitar o kubelet
-sudo systemctl enable kubelet
-sudo systemctl start kubelet
+# Carregar o módulo 'br_netfilter' para manipulação de tráfego de rede entre contêineres
+sudo modprobe br_netfilter
 
-# Verificar status do kubelet
-sudo systemctl status kubelet
+# Configurar parâmetros do sistema (necessário para o Kubernetes)
+echo "1" | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
+echo "net.bridge.bridge-nf-call-iptables = 1" | sudo tee -a /etc/sysctl.conf
+echo "1" | sudo tee /proc/sys/net/ipv4/ip_forward
+echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+                               
