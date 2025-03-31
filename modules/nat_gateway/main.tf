@@ -23,8 +23,3 @@ resource "aws_route_table" "private" {
   tags = var.tags
 }
 
-# Associação da Tabela de Rotas Privada com a Subnet Privada
-resource "aws_route_table_association" "private" {
-  subnet_id      = var.private_subnet_id
-  route_table_id = aws_route_table.private.id
-}
